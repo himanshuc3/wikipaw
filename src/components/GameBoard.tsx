@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert, Space, Spin, Typography } from "antd";
 import { loadHopCandidates } from "../game/hops";
 import { normalizeTitle } from "../game/path";
@@ -14,9 +14,16 @@ type PlayState = {
   won: boolean;
 };
 
+export type HopCounterState = {
+  trail: WikiSummary[];
+  disabled: boolean;
+  onJump: (index: number) => void;
+};
+
 type GameBoardProps = {
   round: GameRound;
   onHopCountChange: (hopCount: number) => void;
+  onHopCounterChange?: (state: HopCounterState | null) => void;
   onNewRound: () => void;
 };
 
@@ -32,6 +39,7 @@ function playFromRound(round: GameRound): PlayState {
 export function GameBoard({
   round,
   onHopCountChange,
+  onHopCounterChange,
   onNewRound,
 }: GameBoardProps) {
   const [play, setPlay] = useState(() => playFromRound(round));
@@ -44,62 +52,65 @@ export function GameBoard({
   );
   const hopRequestRef = useRef(0);
 
-  const moveTo = async (page: WikiSummary, nextTrail: WikiSummary[]) => {
-    const requestId = hopRequestRef.current + 1;
-    hopRequestRef.current = requestId;
-    setHopping(true);
-    setHopError(null);
+  const moveTo = useCallback(
+    async (page: WikiSummary, nextTrail: WikiSummary[]) => {
+      const requestId = hopRequestRef.current + 1;
+      hopRequestRef.current = requestId;
+      setHopping(true);
+      setHopError(null);
 
-    if (titlesMatch(page.title, round.target.title)) {
-      setPlay({
-        current: page,
-        trail: nextTrail,
-        candidates: [],
-        won: true,
-      });
-      onHopCountChange(nextTrail.length - 1);
-      setHopping(false);
-      return;
-    }
-
-    const cacheKey = normalizeTitle(page.title);
-    const cached = cacheRef.current.get(cacheKey);
-
-    try {
-      const candidates =
-        cached ??
-        (await loadHopCandidates(page.title, {
-          preferPins: [round.target.title],
-        }));
-
-      if (requestId !== hopRequestRef.current) {
-        return;
-      }
-
-      cacheRef.current.set(cacheKey, candidates);
-      setPlay({
-        current: page,
-        trail: nextTrail,
-        candidates,
-        won: false,
-      });
-      onHopCountChange(nextTrail.length - 1);
-    } catch (cause) {
-      if (requestId !== hopRequestRef.current) {
-        return;
-      }
-
-      setHopError(
-        cause instanceof Error
-          ? cause.message
-          : "Could not load the next hop gallery.",
-      );
-    } finally {
-      if (requestId === hopRequestRef.current) {
+      if (titlesMatch(page.title, round.target.title)) {
+        setPlay({
+          current: page,
+          trail: nextTrail,
+          candidates: [],
+          won: true,
+        });
+        onHopCountChange(nextTrail.length - 1);
         setHopping(false);
+        return;
       }
-    }
-  };
+
+      const cacheKey = normalizeTitle(page.title);
+      const cached = cacheRef.current.get(cacheKey);
+
+      try {
+        const candidates =
+          cached ??
+          (await loadHopCandidates(page.title, {
+            preferPins: [round.target.title],
+          }));
+
+        if (requestId !== hopRequestRef.current) {
+          return;
+        }
+
+        cacheRef.current.set(cacheKey, candidates);
+        setPlay({
+          current: page,
+          trail: nextTrail,
+          candidates,
+          won: false,
+        });
+        onHopCountChange(nextTrail.length - 1);
+      } catch (cause) {
+        if (requestId !== hopRequestRef.current) {
+          return;
+        }
+
+        setHopError(
+          cause instanceof Error
+            ? cause.message
+            : "Could not load the next hop gallery.",
+        );
+      } finally {
+        if (requestId === hopRequestRef.current) {
+          setHopping(false);
+        }
+      }
+    },
+    [onHopCountChange, round.target.title],
+  );
 
   const handleHop = (candidate: HopCandidate) => {
     if (
@@ -113,6 +124,27 @@ export function GameBoard({
     const page = candidateToSummary(candidate);
     void moveTo(page, [...play.trail, page]);
   };
+
+  useEffect(() => {
+    const jumpToTrailIndex = (index: number) => {
+      const page = play.trail[index];
+      if (!page || hopping || play.won || index === play.trail.length - 1) {
+        return;
+      }
+
+      void moveTo(page, play.trail.slice(0, index + 1));
+    };
+
+    onHopCounterChange?.({
+      trail: play.trail,
+      disabled: hopping || play.won,
+      onJump: jumpToTrailIndex,
+    });
+
+    return () => {
+      onHopCounterChange?.(null);
+    };
+  }, [hopping, moveTo, onHopCounterChange, play.trail, play.won]);
 
   return (
     <Space orientation="vertical" size="large" className="round-board">

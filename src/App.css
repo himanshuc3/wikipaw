@@ -14,11 +14,17 @@
   top: 10px;
   z-index: 10;
   height: auto;
+  display: flex;
+  flex-direction: column;
   width: 60%;
   margin: 0 auto;
-  padding: 6px 12px;
+  background: transparent;
+}
+
+.app-header-main {
   background: white;
   border: 1px solid rgba(200, 200, 200, 1);
+  padding: 6px 12px;
 }
 
 .app-header-inner {
@@ -26,8 +32,6 @@
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  /* gap: 12px; */
-  /* max-width: 1080px; */
   margin: 0 auto;
 }
 
@@ -44,6 +48,15 @@
   background-color: #ffd23f;
   border: 1px solid #e0b400;
   color: black;
+}
+
+.app-header-hop-counter {
+  position: relative;
+  display: flex;
+  justify-content: flex-end;
+
+  width: auto;
+  /* height: 30px; */
 }
 
 .ant-typography.app-logo {

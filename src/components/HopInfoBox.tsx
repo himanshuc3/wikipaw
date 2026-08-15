@@ -1,5 +1,5 @@
 import { Card, Tag, Typography } from "antd";
-import { firstSentence, titlesMatch } from "../game/play";
+import { titlesMatch } from "../game/play";
 import type { HopCandidate } from "../types";
 
 type HopInfoBoxProps = {
@@ -8,7 +8,6 @@ type HopInfoBoxProps = {
 };
 
 export function HopInfoBox({ candidate, targetTitle }: HopInfoBoxProps) {
-  const summary = firstSentence(candidate.extract);
   const isTarget = titlesMatch(candidate.title, targetTitle);
 
   return (

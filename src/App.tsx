@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert, ConfigProvider, Spin, Typography, theme } from "antd";
-import { GameBoard } from "./components/GameBoard";
+import { GameBoard, type HopCounterState } from "./components/GameBoard";
 import { GameShell } from "./components/GameShell";
+import { HopCounter } from "./components/HopCounter";
 import { loadGameRound } from "./game/round";
 import type { GameRound, WikiSummary } from "./types";
 import "./App.css";
@@ -11,6 +12,28 @@ function App() {
   const [roundNonce, setRoundNonce] = useState(0);
   const [round, setRound] = useState<GameRound | null>(null);
   const [hopCount, setHopCount] = useState(0);
+  const [hopCounterState, setHopCounterState] =
+    useState<HopCounterState | null>(null);
+  const handleHopCounterChange = useCallback(
+    (state: HopCounterState | null) => {
+      setHopCounterState((current) => {
+        if (!state) {
+          return current ? null : current;
+        }
+
+        if (
+          current &&
+          current.trail === state.trail &&
+          current.disabled === state.disabled
+        ) {
+          return current;
+        }
+
+        return state;
+      });
+    },
+    [],
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const lastTargetRef = useRef<WikiSummary | undefined>(undefined);
@@ -22,9 +45,7 @@ function App() {
     void loadGameRound({
       hops,
       reuseTarget: reuseTargetRef.current,
-      excludeTitles: lastTargetRef.current
-        ? [lastTargetRef.current.title]
-        : [],
+      excludeTitles: lastTargetRef.current ? [lastTargetRef.current.title] : [],
     })
       .then((nextRound) => {
         if (!cancelled) {
@@ -90,6 +111,9 @@ function App() {
       }}
     >
       <GameShell
+        hopCounter={
+          hopCounterState ? <HopCounter {...hopCounterState} /> : null
+        }
         hopCount={hopCount}
         hops={hops}
         loading={loading}
@@ -125,6 +149,7 @@ function App() {
             key={`${round.target.pageUrl}-${round.start.pageUrl}-${round.requestedHops}`}
             round={round}
             onHopCountChange={setHopCount}
+            onHopCounterChange={handleHopCounterChange}
             onNewRound={handleNewRound}
           />
         ) : null}
