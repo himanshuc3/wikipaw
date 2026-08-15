@@ -16,14 +16,22 @@ type MediaWikiPage = {
   missing?: boolean;
   extract?: string;
   fullurl?: string;
+  length?: number;
   pageimage?: string;
   original?: MediaWikiImage;
   thumbnail?: MediaWikiImage;
   terms?: { description?: string[] };
+  pageprops?: { disambiguation?: string };
   revisions?: {
     "*"?: string;
     slots?: { main?: MediaWikiRevisionSlot };
   }[];
+};
+
+type MediaWikiParseLinksResponse = {
+  parse?: {
+    links?: { ns: number; "*": string }[];
+  };
 };
 
 type MediaWikiExtMetadata = {
@@ -62,6 +70,116 @@ type MediaWikiLinksResponse = {
     pages?: Record<string, { links?: { title: string }[] }>;
   };
 };
+
+const WIKI_API = "https://en.wikipedia.org/w/api.php";
+
+function sleep(ms: number) {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, ms);
+  });
+}
+
+async function wikiJson<T>(params: URLSearchParams, attempt = 0): Promise<T> {
+  const response = await fetch(`${WIKI_API}?${params}`);
+
+  if (response.status === 429 && attempt < 5) {
+    await sleep(500 * (attempt + 1));
+    return wikiJson(params, attempt + 1);
+  }
+
+  if (!response.ok) {
+    throw new Error("Wikipedia request failed.");
+  }
+
+  return (await response.json()) as T;
+}
+
+export type BreedPreview = WikiSummary & {
+  length: number;
+  isDisambiguation: boolean;
+};
+
+export async function fetchExtantBreedTitles(): Promise<string[]> {
+  const titles: string[] = [];
+
+  for (const section of ["2", "3", "4", "5"]) {
+    const data = await wikiJson<MediaWikiParseLinksResponse>(
+      new URLSearchParams({
+        action: "parse",
+        page: "List_of_dog_breeds",
+        prop: "links",
+        section,
+        format: "json",
+        origin: "*",
+      }),
+    );
+
+    for (const link of data.parse?.links ?? []) {
+      if (link.ns === 0 && link["*"]) {
+        titles.push(link["*"]);
+      }
+    }
+
+    await sleep(80);
+  }
+
+  return [...new Set(titles)];
+}
+
+export async function fetchBreedPreviews(
+  titles: string[],
+): Promise<BreedPreview[]> {
+  const uniqueTitles = [...new Set(titles.filter(Boolean))];
+  const previews: BreedPreview[] = [];
+
+  for (let index = 0; index < uniqueTitles.length; index += 20) {
+    const chunk = uniqueTitles.slice(index, index + 20);
+    const data = await wikiJson<MediaWikiQueryResponse>(
+      new URLSearchParams({
+        action: "query",
+        format: "json",
+        origin: "*",
+        redirects: "1",
+        prop: "extracts|pageimages|info|pageterms|pageprops",
+        exintro: "1",
+        explaintext: "1",
+        piprop: "original|thumbnail|name",
+        pithumbsize: "400",
+        inprop: "url",
+        wbptterms: "description",
+        ppprop: "disambiguation",
+        titles: chunk.join("|"),
+      }),
+    );
+
+    for (const page of Object.values(data.query?.pages ?? {})) {
+      if (!page || page.missing) {
+        continue;
+      }
+
+      const extract = page.extract ?? "";
+      const thumbnailUrl = page.thumbnail?.source ?? page.original?.source;
+
+      previews.push({
+        title: page.title,
+        extract,
+        description: page.terms?.description?.[0],
+        thumbnailUrl,
+        pageUrl:
+          page.fullurl ??
+          `https://en.wikipedia.org/wiki/${encodeURIComponent(page.title)}`,
+        length: page.length ?? 0,
+        isDisambiguation:
+          Boolean(page.pageprops?.disambiguation) ||
+          /^[^\n]+ may refer to/i.test(extract),
+      });
+    }
+
+    await sleep(120);
+  }
+
+  return previews;
+}
 
 export async function fetchPageSummary(title: string): Promise<WikiSummary> {
   const params = new URLSearchParams({

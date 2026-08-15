@@ -1,0 +1,80 @@
+.start-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+  padding-top: 12px;
+}
+
+.start-carousel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+
+.start-carousel-name {
+  margin: 0 !important;
+  text-align: center;
+}
+
+.start-carousel-stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  width: 100%;
+}
+
+.start-carousel-nav.ant-btn {
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  border-radius: 0;
+}
+
+.start-carousel-frame {
+  width: min(420px, 70vw);
+  aspect-ratio: 1;
+  overflow: hidden;
+  background: white;
+  border: 1px solid rgba(200, 200, 200, 1);
+}
+
+.start-carousel-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: #efe2d2;
+}
+
+.start-carousel-empty {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  color: #6b5344;
+}
+
+.start-carousel-index {
+  display: block;
+}
+
+.start-screen-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.start-difficulty,
+.start-screen-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.start-difficulty .ant-btn,
+.start-screen-actions .ant-btn {
+  border-radius: 0;
+}

@@ -6,6 +6,10 @@ export type WikiSummary = {
   pageUrl: string;
 };
 
+export type BreedChoice = WikiSummary & {
+  thumbnailUrl: string;
+};
+
 export type HopCandidate = {
   title: string;
   extract: string;

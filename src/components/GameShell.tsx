@@ -9,15 +9,19 @@ type GameShellProps = {
   hopCount: number;
   hops: number;
   loading?: boolean;
+  playing?: boolean;
   onHopsChange: (hops: number) => void;
   onNewRound: () => void;
+  onRestart?: () => void;
 };
 
 export function GameShell({
   children,
   hopCounter,
   loading,
+  playing,
   onNewRound,
+  onRestart,
 }: GameShellProps) {
   return (
     <Layout className="app-shell">
@@ -27,22 +31,26 @@ export function GameShell({
             <Typography.Title level={3} className="app-logo primary">
               Wiki Paws
             </Typography.Title>
-            <div className="header-actions">
-              <Button
-                type="primary"
-                loading={loading}
-                onClick={onNewRound}
-                className="shuffle-btn"
-              >
-                Shuffle
-              </Button>
-              <Button type="primary" loading={loading} onClick={onNewRound}>
-                Restart
-              </Button>
-            </div>
+            {playing ? (
+              <div className="header-actions">
+                <Button
+                  type="primary"
+                  loading={loading}
+                  onClick={onNewRound}
+                  className="shuffle-btn"
+                >
+                  Shuffle
+                </Button>
+                <Button type="primary" loading={loading} onClick={onRestart}>
+                  Restart
+                </Button>
+              </div>
+            ) : null}
           </div>
         </div>
-        <div className="app-header-hop-counter">{hopCounter}</div>
+        {hopCounter ? (
+          <div className="app-header-hop-counter">{hopCounter}</div>
+        ) : null}
         {/* {hopCounter ? ( */}
         {/* ) : null} */}
       </Header>

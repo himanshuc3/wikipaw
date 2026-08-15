@@ -3,13 +3,21 @@ import { Alert, ConfigProvider, Spin, Typography, theme } from "antd";
 import { GameBoard, type HopCounterState } from "./components/GameBoard";
 import { GameShell } from "./components/GameShell";
 import { HopCounter } from "./components/HopCounter";
+import { StartScreen } from "./components/StartScreen";
+import { DIFFICULTY_HOPS, type Difficulty } from "./game/difficulty";
+import { loadBreedCatalog, pickRandomBreed } from "./game/catalog";
 import { loadGameRound } from "./game/round";
-import type { GameRound, WikiSummary } from "./types";
+import type { BreedChoice, GameRound, WikiSummary } from "./types";
 import "./App.css";
 
 function App() {
-  const [hops, setHops] = useState(3);
-  const [roundNonce, setRoundNonce] = useState(0);
+  const [difficulty, setDifficulty] = useState<Difficulty>("easy");
+  const hops = DIFFICULTY_HOPS[difficulty];
+  const [breeds, setBreeds] = useState<BreedChoice[]>([]);
+  const [selectedBreed, setSelectedBreed] = useState<BreedChoice | null>(null);
+  const [catalogLoading, setCatalogLoading] = useState(true);
+  const [catalogProgress, setCatalogProgress] = useState<string>();
+  const [catalogError, setCatalogError] = useState<string | null>(null);
   const [round, setRound] = useState<GameRound | null>(null);
   const [hopCount, setHopCount] = useState(0);
   const [hopCounterState, setHopCounterState] =
@@ -34,68 +42,112 @@ function App() {
     },
     [],
   );
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [roundLoading, setRoundLoading] = useState(false);
+  const [roundError, setRoundError] = useState<string | null>(null);
   const lastTargetRef = useRef<WikiSummary | undefined>(undefined);
-  const reuseTargetRef = useRef<WikiSummary | undefined>(undefined);
+  const selectedTargetRef = useRef<WikiSummary | undefined>(undefined);
 
   useEffect(() => {
     let cancelled = false;
 
-    void loadGameRound({
-      hops,
-      reuseTarget: reuseTargetRef.current,
-      excludeTitles: lastTargetRef.current ? [lastTargetRef.current.title] : [],
+    void loadBreedCatalog((progress) => {
+      if (!cancelled) {
+        setCatalogProgress(progress.message);
+      }
     })
-      .then((nextRound) => {
+      .then((catalog) => {
         if (!cancelled) {
-          lastTargetRef.current = nextRound.target;
-          setHopCount(0);
-          setRound(nextRound);
+          setBreeds(catalog);
+          setSelectedBreed((current) => current ?? catalog[0] ?? null);
         }
       })
       .catch((cause: unknown) => {
         if (!cancelled) {
-          setError(
+          setCatalogError(
             cause instanceof Error
               ? cause.message
-              : "Could not build a hop path from Wikipedia.",
+              : "Could not load dog breeds from Wikipedia.",
           );
         }
       })
       .finally(() => {
         if (!cancelled) {
-          setLoading(false);
+          setCatalogLoading(false);
         }
       });
 
     return () => {
       cancelled = true;
     };
-  }, [hops, roundNonce]);
-
-  const handleNewRound = useCallback(() => {
-    reuseTargetRef.current = undefined;
-    setError(null);
-    setHopCount(0);
-    setLoading(true);
-    setRoundNonce((value) => value + 1);
   }, []);
 
-  const handleHopsChange = useCallback(
-    (nextHops: number) => {
-      if (nextHops === hops) {
-        return;
-      }
+  const startRound = useCallback((target: WikiSummary, nextHops = hops) => {
+    selectedTargetRef.current = target;
+    setRoundError(null);
+    setHopCount(0);
+    setHopCounterState(null);
+    setRoundLoading(true);
 
-      reuseTargetRef.current = lastTargetRef.current;
-      setError(null);
-      setHopCount(0);
-      setLoading(true);
-      setHops(nextHops);
+    void loadGameRound({
+      hops: nextHops,
+      reuseTarget: target,
+    })
+      .then((nextRound) => {
+        lastTargetRef.current = nextRound.target;
+        setRound(nextRound);
+      })
+      .catch((cause: unknown) => {
+        setRound(null);
+        setRoundError(
+          cause instanceof Error
+            ? cause.message
+            : "Could not build a hop path from Wikipedia.",
+        );
+      })
+      .finally(() => {
+        setRoundLoading(false);
+      });
+  }, [hops]);
+
+  const handleStart = useCallback(
+    (breed: BreedChoice) => {
+      setSelectedBreed(breed);
+      startRound(breed);
     },
-    [hops],
+    [startRound],
   );
+
+  const handleSurprise = useCallback(() => {
+    const breed = pickRandomBreed(
+      breeds,
+      lastTargetRef.current ? [lastTargetRef.current.title] : [],
+    );
+    if (!breed) {
+      return;
+    }
+
+    setSelectedBreed(breed);
+    startRound(breed);
+  }, [breeds, startRound]);
+
+  const handleShuffle = useCallback(() => {
+    setRound(null);
+    setRoundError(null);
+    setHopCounterState(null);
+    setSelectedBreed(null);
+    selectedTargetRef.current = undefined;
+  }, []);
+
+  const handleRestart = useCallback(() => {
+    const target = selectedTargetRef.current ?? lastTargetRef.current;
+    if (!target) {
+      return;
+    }
+
+    startRound(target);
+  }, [startRound]);
+
+  const playing = Boolean(round) && !roundLoading;
 
   return (
     <ConfigProvider
@@ -112,45 +164,63 @@ function App() {
     >
       <GameShell
         hopCounter={
-          hopCounterState ? <HopCounter {...hopCounterState} /> : null
+          playing && hopCounterState ? (
+            <HopCounter {...hopCounterState} />
+          ) : null
         }
         hopCount={hopCount}
         hops={hops}
-        loading={loading}
-        onHopsChange={handleHopsChange}
-        onNewRound={handleNewRound}
+        loading={roundLoading}
+        playing={playing}
+        onHopsChange={() => undefined}
+        onNewRound={handleShuffle}
+        onRestart={handleRestart}
       >
-        {error ? (
+        {catalogError ? (
           <Alert
             type="error"
             showIcon
-            message="Wikipedia request failed"
-            description={error}
+            message="Could not load breed list"
+            description={catalogError}
           />
         ) : null}
-        {loading && !round ? (
+        {roundError ? (
+          <Alert
+            type="error"
+            showIcon
+            message="Could not start that hunt"
+            description={roundError}
+          />
+        ) : null}
+        {roundLoading ? (
           <div className="app-loading">
             <Spin size="large" />
             <Typography.Text>
-              Building a start page and hop gallery…
+              Building a start page from {selectedBreed?.title ?? "Wikipedia"}…
             </Typography.Text>
           </div>
         ) : null}
-        {loading && round ? (
-          <Alert
-            className="round-refresh"
-            type="info"
-            showIcon
-            message="Regenerating a start page from Wikipedia backlinks…"
+        {!round && !roundLoading ? (
+          <StartScreen
+            breeds={breeds}
+            difficulty={difficulty}
+            loadingCatalog={catalogLoading}
+            loadingRound={roundLoading}
+            progressMessage={catalogProgress}
+            selected={selectedBreed}
+            onDifficultyChange={setDifficulty}
+            onSelect={setSelectedBreed}
+            onStart={handleStart}
+            onSurprise={handleSurprise}
           />
         ) : null}
-        {round && !loading ? (
+        {round && !roundLoading ? (
           <GameBoard
             key={`${round.target.pageUrl}-${round.start.pageUrl}-${round.requestedHops}`}
             round={round}
             onHopCountChange={setHopCount}
             onHopCounterChange={handleHopCounterChange}
-            onNewRound={handleNewRound}
+            onNewRound={handleShuffle}
           />
         ) : null}
       </GameShell>

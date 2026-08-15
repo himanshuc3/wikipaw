@@ -9,7 +9,6 @@ type HopCounterProps = {
 };
 
 export function HopCounter({ trail, disabled, onJump }: HopCounterProps) {
-  const hopCount = Math.max(trail.length - 1, 0);
   const currentIndex = trail.length - 1;
 
   return (
