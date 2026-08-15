@@ -20,13 +20,6 @@ export function HopGallery({
 }: HopGalleryProps) {
   return (
     <div className="hop-gallery-wrap">
-      <Typography.Title level={4} className="hop-gallery-heading">
-        Hop candidates
-      </Typography.Title>
-      <Typography.Paragraph type="secondary">
-        Each image is a Wikipedia page linked from here. Click a tile to hop.
-        Use the expand control to preview the photo first.
-      </Typography.Paragraph>
       <Gallery
         withCaption
         options={{

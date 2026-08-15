@@ -1,4 +1,4 @@
-import { Button, Layout, Segmented, Space, Tag, Typography } from "antd";
+import { Button, Layout, Segmented, Space, Typography } from "antd";
 import { ReloadOutlined } from "@ant-design/icons";
 import type { ReactNode } from "react";
 
@@ -27,38 +27,34 @@ export function GameShell({
     <Layout className="app-shell">
       <Header className="app-header">
         <div className="app-header-inner">
-          <Space align="center" size="middle">
-            <Typography.Title level={3} className="app-logo">
-              Pawhop
-            </Typography.Title>
-            <Tag color="gold">Phase 4</Tag>
-            <Tag color="default">{hopCount} hops</Tag>
-          </Space>
-          <Space align="center" size="middle" wrap>
-            <Segmented
-              options={HOP_OPTIONS.map((value) => ({
-                label: `${value} hops`,
-                value,
-              }))}
-              value={hops}
-              onChange={(value) => onHopsChange(Number(value))}
-            />
+          <Typography.Title level={3} className="app-logo primary">
+            Wiki Paws
+          </Typography.Title>
+          <div className="header-actions">
             <Button
               type="primary"
               icon={<ReloadOutlined />}
               loading={loading}
               onClick={onNewRound}
             >
-              New round
+              Shuffle
             </Button>
-          </Space>
+            <Button
+              type="primary"
+              icon={<ReloadOutlined />}
+              loading={loading}
+              onClick={onNewRound}
+            >
+              Start again
+            </Button>
+          </div>
         </div>
       </Header>
       <Content className="app-content">{children}</Content>
-      <Footer className="app-footer">
+      {/* <Footer className="app-footer">
         Hop through linked Wikipedia images until you land on the target breed
         page.
-      </Footer>
+      </Footer> */}
     </Layout>
   );
 }

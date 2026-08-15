@@ -104,7 +104,11 @@ export function GameBoard({
   };
 
   const handleHop = (candidate: HopCandidate) => {
-    if (hopping || play.won || titlesMatch(candidate.title, play.current.title)) {
+    if (
+      hopping ||
+      play.won ||
+      titlesMatch(candidate.title, play.current.title)
+    ) {
       return;
     }
 
@@ -123,14 +127,14 @@ export function GameBoard({
 
   return (
     <Space orientation="vertical" size="large" className="round-board">
-      <TargetStrip target={round.target} />
+      {/* <TargetStrip target={round.target} />
       <HopTrail
         trail={play.trail}
         disabled={hopping || play.won}
         onBack={() => handleJump(play.trail.length - 2)}
         onJump={handleJump}
-      />
-      <Card className="current-page-card">
+      /> */}
+      {/* <Card className="current-page-card">
         <Typography.Text type="secondary">You are on</Typography.Text>
         <Typography.Title level={3} className="current-page-title">
           {play.current.title}
@@ -144,10 +148,8 @@ export function GameBoard({
             {play.current.extract}
           </Typography.Paragraph>
         ) : null}
-      </Card>
-      {hopError ? (
-        <Alert type="error" showIcon message={hopError} />
-      ) : null}
+      </Card> */}
+      {hopError ? <Alert type="error" showIcon message={hopError} /> : null}
       {hopping ? (
         <div className="hop-loading">
           <Spin />
