@@ -1,10 +1,8 @@
-import { Button, Layout, Segmented, Space, Typography } from "antd";
+import { Button, Layout, Typography } from "antd";
 import { ReloadOutlined } from "@ant-design/icons";
 import type { ReactNode } from "react";
 
-const { Header, Content, Footer } = Layout;
-
-const HOP_OPTIONS = [2, 3, 5] as const;
+const { Header, Content } = Layout;
 
 type GameShellProps = {
   children: ReactNode;
@@ -17,10 +15,7 @@ type GameShellProps = {
 
 export function GameShell({
   children,
-  hopCount,
-  hops,
   loading,
-  onHopsChange,
   onNewRound,
 }: GameShellProps) {
   return (

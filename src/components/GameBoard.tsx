@@ -1,12 +1,10 @@
 import { useRef, useState } from "react";
-import { Alert, Card, Space, Spin, Typography } from "antd";
+import { Alert, Space, Spin, Typography } from "antd";
 import { loadHopCandidates } from "../game/hops";
 import { normalizeTitle } from "../game/path";
 import { candidateToSummary, titlesMatch } from "../game/play";
 import type { GameRound, HopCandidate, WikiSummary } from "../types";
 import { HopGallery } from "./HopGallery";
-import { HopTrail } from "./HopTrail";
-import { TargetStrip } from "./TargetStrip";
 import { WinModal } from "./WinModal";
 
 type PlayState = {
@@ -114,15 +112,6 @@ export function GameBoard({
 
     const page = candidateToSummary(candidate);
     void moveTo(page, [...play.trail, page]);
-  };
-
-  const handleJump = (index: number) => {
-    const page = play.trail[index];
-    if (!page || hopping || play.won || index === play.trail.length - 1) {
-      return;
-    }
-
-    void moveTo(page, play.trail.slice(0, index + 1));
   };
 
   return (

@@ -10,9 +10,11 @@ export type HopCandidate = {
   title: string;
   extract: string;
   description?: string;
+  caption?: string;
   pageUrl: string;
   thumbnailUrl: string;
   imageUrl: string;
+  fileName?: string;
   width: number;
   height: number;
 };

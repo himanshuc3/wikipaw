@@ -1,0 +1,7 @@
+- Wiki paws :: paw logo behind paws
+- Selecting an image has an animation similar to google page paw select???
+- Adding hurdles? 
+- Different modes of difficulty
+- Choosing which dog breed we need to reach or some other object?
+- Adding an option to go back
+- Maintaining and showing the history 

@@ -1,9 +1,7 @@
-import { Tag, Typography, Masonry, Card } from "antd";
-import { ExpandOutlined } from "@ant-design/icons";
-import { Gallery, Item } from "react-photoswipe-gallery";
+import { useState } from "react";
+import { Masonry } from "antd";
 import type { HopCandidate } from "../types";
-import { titlesMatch } from "../game/play";
-import "photoswipe/style.css";
+import { HopInfoBox } from "./HopInfoBox";
 
 type HopGalleryProps = {
   candidates: HopCandidate[];
@@ -18,8 +16,10 @@ export function HopGallery({
   targetTitle,
   onHop,
 }: HopGalleryProps) {
+  const [hovered, setHovered] = useState<HopCandidate | null>(null);
+
   return (
-    <div className="hop-gallery-wrap">
+    <div className="hop-gallery-wrap" onMouseLeave={() => setHovered(null)}>
       <Masonry
         columns={4}
         gutter={16}
@@ -28,15 +28,26 @@ export function HopGallery({
           data: candidate,
         }))}
         itemRender={({ data }) => (
-          <div onClick={() => onHop(data)}>
+          <button
+            type="button"
+            className="hop-masonry-item"
+            disabled={disabled}
+            onMouseEnter={() => setHovered(data)}
+            onFocus={() => setHovered(data)}
+            onClick={() => onHop(data)}
+          >
             <img
-              src={`${data.imageUrl || data.thumbnailUrl}`}
-              alt="sample"
-              style={{ width: "100%" }}
+              src={data.imageUrl || data.thumbnailUrl}
+              alt={data.title}
+              width={data.width}
+              height={data.height}
             />
-          </div>
+          </button>
         )}
       />
+      {hovered ? (
+        <HopInfoBox candidate={hovered} targetTitle={targetTitle} />
+      ) : null}
     </div>
   );
 }

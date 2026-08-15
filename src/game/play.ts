@@ -14,3 +14,14 @@ export function candidateToSummary(candidate: HopCandidate): WikiSummary {
     pageUrl: candidate.pageUrl,
   };
 }
+
+export function firstSentence(text: string) {
+  const trimmed = text.trim();
+
+  if (!trimmed) {
+    return undefined;
+  }
+
+  const match = trimmed.match(/^.+?[.!?](?:\s|$)/);
+  return (match?.[0] ?? trimmed).trim();
+}

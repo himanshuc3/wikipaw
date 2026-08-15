@@ -6,14 +6,41 @@ type MediaWikiImage = {
   height?: number;
 };
 
+type MediaWikiRevisionSlot = {
+  content?: string;
+  "*"?: string;
+};
+
 type MediaWikiPage = {
   title: string;
   missing?: boolean;
   extract?: string;
   fullurl?: string;
+  pageimage?: string;
   original?: MediaWikiImage;
   thumbnail?: MediaWikiImage;
   terms?: { description?: string[] };
+  revisions?: {
+    "*"?: string;
+    slots?: { main?: MediaWikiRevisionSlot };
+  }[];
+};
+
+type MediaWikiExtMetadata = {
+  ImageDescription?: { value?: string };
+  ObjectName?: { value?: string };
+};
+
+type MediaWikiImageInfoResponse = {
+  query?: {
+    pages?: Record<
+      string,
+      {
+        title: string;
+        imageinfo?: { extmetadata?: MediaWikiExtMetadata }[];
+      }
+    >;
+  };
 };
 
 type MediaWikiQueryResponse = {
@@ -173,9 +200,134 @@ function toHopCandidate(page: MediaWikiPage): HopCandidate | undefined {
       `https://en.wikipedia.org/wiki/${encodeURIComponent(page.title)}`,
     thumbnailUrl: thumbnail.source,
     imageUrl,
+    fileName: page.pageimage,
     width: original?.width ?? thumbnail.width ?? 800,
     height: original?.height ?? thumbnail.height ?? 600,
   };
+}
+
+function stripMarkup(value: string) {
+  return value
+    .replaceAll(/<[^>]+>/g, " ")
+    .replaceAll(/&nbsp;/gi, " ")
+    .replaceAll(/&amp;/gi, "&")
+    .replaceAll(/&quot;/gi, '"')
+    .replaceAll(/&#39;/g, "'")
+    .replaceAll(/\s+/g, " ")
+    .trim();
+}
+
+function stripWiki(value: string) {
+  return stripMarkup(
+    value
+      .replaceAll(/\{\{[^}]+\}\}/g, " ")
+      .replaceAll(/\[\[([^|\]]+\|)?([^\]]+)\]\]/g, "$2")
+      .replaceAll(/'{2,}/g, ""),
+  );
+}
+
+function escapeRegExp(value: string) {
+  return value.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function isFileOption(value: string) {
+  return /^(thumb|thumbnail|right|left|center|none|framed|frameless|border|upright[ =]?[\d.]*|\d+px|alt=.*)$/i.test(
+    value.trim(),
+  );
+}
+
+function readRevisionText(page: MediaWikiPage) {
+  const revision = page.revisions?.[0];
+  return (
+    revision?.slots?.main?.content ??
+    revision?.slots?.main?.["*"] ??
+    revision?.["*"]
+  );
+}
+
+function captionFromWikitext(wikitext: string, fileName: string) {
+  const base = fileName.replace(/^File:/i, "").trim();
+  const pattern = new RegExp(
+    `\\[\\[(?:File|Image|Media):\\s*${escapeRegExp(base).replaceAll(" ", "[ _]")}\\s*\\|([^\\]]+)\\]\\]`,
+    "i",
+  );
+  const fileMatch = wikitext.match(pattern);
+  const options = fileMatch?.[1]?.split("|") ?? [];
+  const fileCaption = [...options]
+    .reverse()
+    .find((part) => part.trim() && !isFileOption(part));
+
+  if (fileCaption) {
+    const cleaned = stripWiki(fileCaption);
+    if (cleaned) {
+      return cleaned;
+    }
+  }
+
+  const imageField = wikitext.match(/\|\s*image\s*=\s*([^\n]+)/i)?.[1];
+  if (
+    imageField &&
+    normalizeFileName(imageField) === normalizeFileName(fileName)
+  ) {
+    const infoboxCaption = wikitext.match(
+      /\|\s*(?:image_caption|caption)\s*=\s*([^\n]+)/i,
+    )?.[1];
+    if (infoboxCaption) {
+      return stripWiki(infoboxCaption);
+    }
+  }
+
+  return undefined;
+}
+
+function fileTitle(fileName: string) {
+  return fileName.startsWith("File:") ? fileName : `File:${fileName}`;
+}
+
+function normalizeFileName(fileName: string) {
+  return fileName.replace(/^File:/i, "").replaceAll("_", " ").trim().toLowerCase();
+}
+
+async function fetchImageCaptions(fileNames: string[]) {
+  const captions = new Map<string, string>();
+  const uniqueNames = [...new Set(fileNames.filter(Boolean))];
+
+  for (let index = 0; index < uniqueNames.length; index += 20) {
+    const chunk = uniqueNames.slice(index, index + 20);
+    const params = new URLSearchParams({
+      action: "query",
+      format: "json",
+      origin: "*",
+      redirects: "1",
+      prop: "imageinfo",
+      iiprop: "extmetadata",
+      iiextmetadatalanguage: "en",
+      titles: chunk.map(fileTitle).join("|"),
+    });
+
+    const response = await fetch(`https://en.wikipedia.org/w/api.php?${params}`);
+
+    if (!response.ok) {
+      continue;
+    }
+
+    const data = (await response.json()) as MediaWikiImageInfoResponse;
+
+    for (const page of Object.values(data.query?.pages ?? {})) {
+      const metadata = page.imageinfo?.[0]?.extmetadata;
+      const raw =
+        metadata?.ImageDescription?.value ?? metadata?.ObjectName?.value;
+      const caption = raw ? stripMarkup(raw) : undefined;
+
+      if (!caption) {
+        continue;
+      }
+
+      captions.set(normalizeFileName(page.title), caption);
+    }
+  }
+
+  return captions;
 }
 
 export async function fetchPagesWithImages(
@@ -191,13 +343,15 @@ export async function fetchPagesWithImages(
       format: "json",
       origin: "*",
       redirects: "1",
-      prop: "extracts|pageimages|info|pageterms",
+      prop: "extracts|pageimages|info|pageterms|revisions",
       exintro: "1",
       explaintext: "1",
-      piprop: "original|thumbnail",
+      piprop: "original|thumbnail|name",
       pithumbsize: "400",
       inprop: "url",
       wbptterms: "description",
+      rvprop: "content",
+      rvslots: "main",
       titles: chunk.join("|"),
     });
 
@@ -211,8 +365,39 @@ export async function fetchPagesWithImages(
 
     for (const page of Object.values(data.query?.pages ?? {})) {
       const candidate = toHopCandidate(page);
-      if (candidate) {
-        results.push(candidate);
+      if (!candidate) {
+        continue;
+      }
+
+      const wikitext = readRevisionText(page);
+      const articleCaption =
+        candidate.fileName && wikitext
+          ? captionFromWikitext(wikitext, candidate.fileName)
+          : undefined;
+
+      results.push({
+        ...candidate,
+        caption: articleCaption,
+      });
+    }
+  }
+
+  const missingCaptions = results.filter(
+    (candidate) => !candidate.caption && candidate.fileName,
+  );
+
+  if (missingCaptions.length > 0) {
+    const fallbacks = await fetchImageCaptions(
+      missingCaptions
+        .map((candidate) => candidate.fileName)
+        .filter((fileName): fileName is string => Boolean(fileName)),
+    );
+
+    for (const candidate of results) {
+      if (!candidate.caption && candidate.fileName) {
+        candidate.caption = fallbacks.get(
+          normalizeFileName(candidate.fileName),
+        );
       }
     }
   }

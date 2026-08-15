@@ -11,11 +11,14 @@
 
 .app-shell .app-header {
   position: sticky;
-  top: 0;
+  top: 10px;
   z-index: 10;
   height: auto;
+  width: 80%;
+  margin: 0 auto;
   padding: 12px 24px;
   background: white;
+  border: 1px solid rgba(200, 200, 200, 1);
 }
 
 .app-header-inner {
@@ -24,7 +27,7 @@
   justify-content: space-between;
   flex-wrap: wrap;
   /* gap: 12px; */
-  max-width: 1080px;
+  /* max-width: 1080px; */
   margin: 0 auto;
 }
 
@@ -181,4 +184,70 @@
 
 .win-title {
   margin: 0 !important;
+}
+
+.hop-gallery-wrap {
+  position: relative;
+}
+
+.hop-masonry-item {
+  display: block;
+  width: 100%;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 8px;
+  background: #efe2d2;
+  cursor: pointer;
+}
+
+.hop-masonry-item:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.hop-masonry-item img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.hop-info-box {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 20;
+  max-width: 90%;
+  width: 250px;
+  box-shadow: 0 12px 40px rgba(43, 29, 20, 0.18);
+  background: white;
+  border-radius: 0px;
+  border: 1px solid rgba(200, 200, 200, 1);
+}
+
+.hop-info-box-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.hop-info-title {
+  margin: 0 !important;
+}
+
+.hop-info-title a {
+  color: inherit;
+}
+
+.hop-info-kind {
+  display: block;
+}
+
+.hop-info-caption,
+.hop-info-extract {
+  margin: 0 !important;
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
 }
