@@ -14,9 +14,9 @@
   top: 10px;
   z-index: 10;
   height: auto;
-  width: 80%;
+  width: 60%;
   margin: 0 auto;
-  padding: 12px 24px;
+  padding: 6px 12px;
   background: white;
   border: 1px solid rgba(200, 200, 200, 1);
 }
@@ -34,6 +34,16 @@
 .header-actions {
   display: flex;
   gap: 12px;
+}
+
+.header-actions button.ant-btn {
+  border-radius: 0px;
+}
+
+.header-actions button.ant-btn.shuffle-btn {
+  background-color: #ffd23f;
+  border: 1px solid #e0b400;
+  color: black;
 }
 
 .ant-typography.app-logo {

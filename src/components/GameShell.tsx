@@ -13,11 +13,7 @@ type GameShellProps = {
   onNewRound: () => void;
 };
 
-export function GameShell({
-  children,
-  loading,
-  onNewRound,
-}: GameShellProps) {
+export function GameShell({ children, loading, onNewRound }: GameShellProps) {
   return (
     <Layout className="app-shell">
       <Header className="app-header">
@@ -28,19 +24,14 @@ export function GameShell({
           <div className="header-actions">
             <Button
               type="primary"
-              icon={<ReloadOutlined />}
               loading={loading}
               onClick={onNewRound}
+              className="shuffle-btn"
             >
               Shuffle
             </Button>
-            <Button
-              type="primary"
-              icon={<ReloadOutlined />}
-              loading={loading}
-              onClick={onNewRound}
-            >
-              Start again
+            <Button type="primary" loading={loading} onClick={onNewRound}>
+              Restart
             </Button>
           </div>
         </div>
