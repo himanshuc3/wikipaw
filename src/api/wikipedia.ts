@@ -1,0 +1,221 @@
+import type { HopCandidate, WikiSummary } from "../types";
+
+type MediaWikiImage = {
+  source: string;
+  width?: number;
+  height?: number;
+};
+
+type MediaWikiPage = {
+  title: string;
+  missing?: boolean;
+  extract?: string;
+  fullurl?: string;
+  original?: MediaWikiImage;
+  thumbnail?: MediaWikiImage;
+  terms?: { description?: string[] };
+};
+
+type MediaWikiQueryResponse = {
+  query?: {
+    pages?: Record<string, MediaWikiPage>;
+  };
+};
+
+type MediaWikiBacklinksResponse = {
+  continue?: { blcontinue?: string };
+  query?: {
+    backlinks?: { title: string }[];
+  };
+};
+
+type MediaWikiLinksResponse = {
+  continue?: { plcontinue?: string };
+  query?: {
+    pages?: Record<string, { links?: { title: string }[] }>;
+  };
+};
+
+export async function fetchPageSummary(title: string): Promise<WikiSummary> {
+  const params = new URLSearchParams({
+    action: "query",
+    format: "json",
+    origin: "*",
+    redirects: "1",
+    prop: "extracts|pageimages|info|pageterms",
+    exintro: "1",
+    explaintext: "1",
+    piprop: "original|thumbnail",
+    pithumbsize: "800",
+    inprop: "url",
+    wbptterms: "description",
+    titles: title,
+  });
+
+  const response = await fetch(`https://en.wikipedia.org/w/api.php?${params}`);
+
+  if (!response.ok) {
+    throw new Error(`Could not load Wikipedia page “${title}”.`);
+  }
+
+  const data = (await response.json()) as MediaWikiQueryResponse;
+  const page = Object.values(data.query?.pages ?? {})[0];
+
+  if (!page || page.missing) {
+    throw new Error(`Wikipedia has no article titled “${title}”.`);
+  }
+
+  return {
+    title: page.title,
+    extract: page.extract ?? "",
+    description: page.terms?.description?.[0],
+    thumbnailUrl: page.original?.source ?? page.thumbnail?.source,
+    pageUrl:
+      page.fullurl ??
+      `https://en.wikipedia.org/wiki/${encodeURIComponent(page.title)}`,
+  };
+}
+
+export async function fetchBacklinks(
+  title: string,
+  limit = 80,
+): Promise<string[]> {
+  const titles: string[] = [];
+  let continueToken: string | undefined;
+
+  do {
+    const params = new URLSearchParams({
+      action: "query",
+      format: "json",
+      origin: "*",
+      list: "backlinks",
+      bltitle: title,
+      blnamespace: "0",
+      blfilterredir: "nonredirects",
+      bllimit: String(Math.min(50, limit - titles.length)),
+    });
+
+    if (continueToken) {
+      params.set("blcontinue", continueToken);
+    }
+
+    const response = await fetch(`https://en.wikipedia.org/w/api.php?${params}`);
+
+    if (!response.ok) {
+      throw new Error(`Could not load Wikipedia backlinks for “${title}”.`);
+    }
+
+    const data = (await response.json()) as MediaWikiBacklinksResponse;
+    const batch = data.query?.backlinks ?? [];
+    titles.push(...batch.map((link) => link.title));
+    continueToken = data.continue?.blcontinue;
+  } while (continueToken && titles.length < limit);
+
+  return titles;
+}
+
+export async function fetchOutgoingLinks(
+  title: string,
+  limit = 120,
+): Promise<string[]> {
+  const titles: string[] = [];
+  let continueToken: string | undefined;
+
+  do {
+    const params = new URLSearchParams({
+      action: "query",
+      format: "json",
+      origin: "*",
+      prop: "links",
+      titles: title,
+      plnamespace: "0",
+      pllimit: String(Math.min(50, limit - titles.length)),
+    });
+
+    if (continueToken) {
+      params.set("plcontinue", continueToken);
+    }
+
+    const response = await fetch(`https://en.wikipedia.org/w/api.php?${params}`);
+
+    if (!response.ok) {
+      throw new Error(`Could not load Wikipedia links for “${title}”.`);
+    }
+
+    const data = (await response.json()) as MediaWikiLinksResponse;
+    const page = Object.values(data.query?.pages ?? {})[0];
+    titles.push(...(page?.links ?? []).map((link) => link.title));
+    continueToken = data.continue?.plcontinue;
+  } while (continueToken && titles.length < limit);
+
+  return titles;
+}
+
+function toHopCandidate(page: MediaWikiPage): HopCandidate | undefined {
+  if (page.missing) {
+    return undefined;
+  }
+
+  const thumbnail = page.thumbnail;
+  const original = page.original;
+  const imageUrl = original?.source ?? thumbnail?.source;
+
+  if (!imageUrl || !thumbnail) {
+    return undefined;
+  }
+
+  return {
+    title: page.title,
+    extract: page.extract ?? "",
+    description: page.terms?.description?.[0],
+    pageUrl:
+      page.fullurl ??
+      `https://en.wikipedia.org/wiki/${encodeURIComponent(page.title)}`,
+    thumbnailUrl: thumbnail.source,
+    imageUrl,
+    width: original?.width ?? thumbnail.width ?? 800,
+    height: original?.height ?? thumbnail.height ?? 600,
+  };
+}
+
+export async function fetchPagesWithImages(
+  titles: string[],
+): Promise<HopCandidate[]> {
+  const uniqueTitles = [...new Set(titles.filter(Boolean))];
+  const results: HopCandidate[] = [];
+
+  for (let index = 0; index < uniqueTitles.length; index += 20) {
+    const chunk = uniqueTitles.slice(index, index + 20);
+    const params = new URLSearchParams({
+      action: "query",
+      format: "json",
+      origin: "*",
+      redirects: "1",
+      prop: "extracts|pageimages|info|pageterms",
+      exintro: "1",
+      explaintext: "1",
+      piprop: "original|thumbnail",
+      pithumbsize: "400",
+      inprop: "url",
+      wbptterms: "description",
+      titles: chunk.join("|"),
+    });
+
+    const response = await fetch(`https://en.wikipedia.org/w/api.php?${params}`);
+
+    if (!response.ok) {
+      throw new Error("Could not load Wikipedia page images.");
+    }
+
+    const data = (await response.json()) as MediaWikiQueryResponse;
+
+    for (const page of Object.values(data.query?.pages ?? {})) {
+      const candidate = toHopCandidate(page);
+      if (candidate) {
+        results.push(candidate);
+      }
+    }
+  }
+
+  return results;
+}
