@@ -35,7 +35,9 @@ export function StartScreen({
       return 0;
     }
 
-    const index = breeds.findIndex((breed) => breed.pageUrl === selected.pageUrl);
+    const index = breeds.findIndex(
+      (breed) => breed.pageUrl === selected.pageUrl,
+    );
     return index === -1 ? 0 : index;
   }, [breeds, selected]);
 
@@ -75,7 +77,7 @@ export function StartScreen({
   return (
     <div className="start-screen">
       <div className="start-carousel">
-        <Typography.Title level={2} className="start-carousel-name">
+        <Typography.Title level={2} className="start-carousel-name primary">
           {current?.title ?? "Choose a breed"}
         </Typography.Title>
 
@@ -84,6 +86,7 @@ export function StartScreen({
             className="start-carousel-nav"
             aria-label="Previous breed"
             disabled={breeds.length < 2}
+            type="text"
             icon={<LeftOutlined />}
             onClick={() => step(-1)}
           />

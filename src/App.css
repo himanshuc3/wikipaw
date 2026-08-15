@@ -209,6 +209,14 @@
   margin: 0 !important;
 }
 
+.teaser-gallery {
+  pointer-events: none;
+}
+
+.teaser-gallery .hop-masonry-item {
+  cursor: default;
+}
+
 .hop-gallery-wrap {
   position: relative;
 }

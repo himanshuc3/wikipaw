@@ -1,5 +1,5 @@
 import { fetchBreedPreviews, fetchExtantBreedTitles } from "../api/wikipedia";
-import type { BreedChoice } from "../types";
+import type { BreedChoice, HopCandidate } from "../types";
 import { DOG_BREED_TITLES } from "./breeds";
 import { isUsablePathPage, normalizeTitle } from "./path";
 
@@ -144,4 +144,32 @@ export function pickRandomBreed(
   }
 
   return source[Math.floor(Math.random() * source.length)];
+}
+
+export function teaserCandidatesFromBreeds(
+  breeds: BreedChoice[],
+  limit = 28,
+): HopCandidate[] {
+  const shuffled = [...breeds];
+
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    const current = shuffled[index];
+    const swap = shuffled[swapIndex];
+    if (current && swap) {
+      shuffled[index] = swap;
+      shuffled[swapIndex] = current;
+    }
+  }
+
+  return shuffled.slice(0, limit).map((breed, index) => ({
+    title: breed.title,
+    extract: breed.extract,
+    description: breed.description,
+    pageUrl: breed.pageUrl,
+    thumbnailUrl: breed.thumbnailUrl,
+    imageUrl: breed.thumbnailUrl,
+    width: 400,
+    height: 280 + ((index * 47) % 200),
+  }));
 }

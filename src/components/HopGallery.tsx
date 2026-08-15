@@ -6,6 +6,7 @@ import { HopInfoBox } from "./HopInfoBox";
 type HopGalleryProps = {
   candidates: HopCandidate[];
   disabled?: boolean;
+  preview?: boolean;
   targetTitle: string;
   onHop: (candidate: HopCandidate) => void;
 };
@@ -13,6 +14,7 @@ type HopGalleryProps = {
 export function HopGallery({
   candidates,
   disabled,
+  preview,
   targetTitle,
   onHop,
 }: HopGalleryProps) {
@@ -45,7 +47,7 @@ export function HopGallery({
           </button>
         )}
       />
-      {hovered ? (
+      {hovered && !preview ? (
         <HopInfoBox candidate={hovered} targetTitle={targetTitle} />
       ) : null}
     </div>

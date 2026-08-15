@@ -1,11 +1,16 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Alert, ConfigProvider, Spin, Typography, theme } from "antd";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Alert, ConfigProvider, Modal, Spin, Typography, theme } from "antd";
 import { GameBoard, type HopCounterState } from "./components/GameBoard";
 import { GameShell } from "./components/GameShell";
 import { HopCounter } from "./components/HopCounter";
+import { HopGallery } from "./components/HopGallery";
 import { StartScreen } from "./components/StartScreen";
 import { DIFFICULTY_HOPS, type Difficulty } from "./game/difficulty";
-import { loadBreedCatalog, pickRandomBreed } from "./game/catalog";
+import {
+  loadBreedCatalog,
+  pickRandomBreed,
+  teaserCandidatesFromBreeds,
+} from "./game/catalog";
 import { loadGameRound } from "./game/round";
 import type { BreedChoice, GameRound, WikiSummary } from "./types";
 import "./App.css";
@@ -18,6 +23,7 @@ function App() {
   const [catalogLoading, setCatalogLoading] = useState(true);
   const [catalogProgress, setCatalogProgress] = useState<string>();
   const [catalogError, setCatalogError] = useState<string | null>(null);
+  const [setupOpen, setSetupOpen] = useState(false);
   const [round, setRound] = useState<GameRound | null>(null);
   const [hopCount, setHopCount] = useState(0);
   const [hopCounterState, setHopCounterState] =
@@ -46,6 +52,10 @@ function App() {
   const [roundError, setRoundError] = useState<string | null>(null);
   const lastTargetRef = useRef<WikiSummary | undefined>(undefined);
   const selectedTargetRef = useRef<WikiSummary | undefined>(undefined);
+  const teaserCandidates = useMemo(
+    () => teaserCandidatesFromBreeds(breeds),
+    [breeds],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -81,33 +91,37 @@ function App() {
     };
   }, []);
 
-  const startRound = useCallback((target: WikiSummary, nextHops = hops) => {
-    selectedTargetRef.current = target;
-    setRoundError(null);
-    setHopCount(0);
-    setHopCounterState(null);
-    setRoundLoading(true);
+  const startRound = useCallback(
+    (target: WikiSummary, nextHops = hops) => {
+      selectedTargetRef.current = target;
+      setRoundError(null);
+      setHopCount(0);
+      setHopCounterState(null);
+      setRoundLoading(true);
 
-    void loadGameRound({
-      hops: nextHops,
-      reuseTarget: target,
-    })
-      .then((nextRound) => {
-        lastTargetRef.current = nextRound.target;
-        setRound(nextRound);
+      void loadGameRound({
+        hops: nextHops,
+        reuseTarget: target,
       })
-      .catch((cause: unknown) => {
-        setRound(null);
-        setRoundError(
-          cause instanceof Error
-            ? cause.message
-            : "Could not build a hop path from Wikipedia.",
-        );
-      })
-      .finally(() => {
-        setRoundLoading(false);
-      });
-  }, [hops]);
+        .then((nextRound) => {
+          lastTargetRef.current = nextRound.target;
+          setRound(nextRound);
+          setSetupOpen(false);
+        })
+        .catch((cause: unknown) => {
+          setRound(null);
+          setRoundError(
+            cause instanceof Error
+              ? cause.message
+              : "Could not build a hop path from Wikipedia.",
+          );
+        })
+        .finally(() => {
+          setRoundLoading(false);
+        });
+    },
+    [hops],
+  );
 
   const handleStart = useCallback(
     (breed: BreedChoice) => {
@@ -131,23 +145,21 @@ function App() {
   }, [breeds, startRound]);
 
   const handleShuffle = useCallback(() => {
-    setRound(null);
     setRoundError(null);
-    setHopCounterState(null);
-    setSelectedBreed(null);
-    selectedTargetRef.current = undefined;
+    setSetupOpen(true);
   }, []);
 
   const handleRestart = useCallback(() => {
     const target = selectedTargetRef.current ?? lastTargetRef.current;
     if (!target) {
+      setSetupOpen(true);
       return;
     }
 
     startRound(target);
   }, [startRound]);
 
-  const playing = Boolean(round) && !roundLoading;
+  const playing = Boolean(round) && !roundLoading && !setupOpen;
 
   return (
     <ConfigProvider
@@ -173,7 +185,10 @@ function App() {
         loading={roundLoading}
         playing={playing}
         onHopsChange={() => undefined}
-        onNewRound={handleShuffle}
+        onNewRound={() => {
+          setRoundError(null);
+          setSetupOpen(true);
+        }}
         onRestart={handleRestart}
       >
         {catalogError ? (
@@ -200,7 +215,33 @@ function App() {
             </Typography.Text>
           </div>
         ) : null}
-        {!round && !roundLoading ? (
+        {!round && !roundLoading && teaserCandidates.length > 0 ? (
+          <div className="teaser-gallery">
+            <HopGallery
+              preview
+              candidates={teaserCandidates}
+              targetTitle=""
+              onHop={() => undefined}
+            />
+          </div>
+        ) : null}
+        {round && !roundLoading ? (
+          <GameBoard
+            key={`${round.target.pageUrl}-${round.start.pageUrl}-${round.requestedHops}`}
+            round={round}
+            onHopCountChange={setHopCount}
+            onHopCounterChange={handleHopCounterChange}
+            onNewRound={handleShuffle}
+          />
+        ) : null}
+        <Modal
+          open={setupOpen && !roundLoading}
+          footer={null}
+          centered
+          width={"70%"}
+          className="start-modal"
+          onCancel={() => setSetupOpen(false)}
+        >
           <StartScreen
             breeds={breeds}
             difficulty={difficulty}
@@ -213,16 +254,7 @@ function App() {
             onStart={handleStart}
             onSurprise={handleSurprise}
           />
-        ) : null}
-        {round && !roundLoading ? (
-          <GameBoard
-            key={`${round.target.pageUrl}-${round.start.pageUrl}-${round.requestedHops}`}
-            round={round}
-            onHopCountChange={setHopCount}
-            onHopCounterChange={handleHopCounterChange}
-            onNewRound={handleShuffle}
-          />
-        ) : null}
+        </Modal>
       </GameShell>
     </ConfigProvider>
   );
