@@ -63,6 +63,24 @@
   margin-bottom: 0;
 }
 
+.app-logo-info {
+  margin-left: 4px;
+  font-size: 0.55em;
+  vertical-align: super;
+  color: #6b5344;
+  cursor: help;
+}
+
+.game-rules {
+  margin: 0;
+  padding-left: 18px;
+  max-width: 280px;
+}
+
+.game-rules li + li {
+  margin-top: 6px;
+}
+
 .app-content {
   max-width: 1080px;
   width: 100%;

@@ -1,6 +1,6 @@
-import { useEffect, useMemo } from "react";
-import { LeftOutlined, RightOutlined } from "@ant-design/icons";
-import { Button, Spin, Typography } from "antd";
+import { useEffect, useMemo, useRef } from "react";
+import { Button, Carousel, Spin, Switch, Typography } from "antd";
+import type { CarouselRef } from "antd/es/carousel";
 import type { Difficulty } from "../../game/difficulty";
 import type { BreedChoice } from "../../types";
 import "./index.scss";
@@ -30,6 +30,7 @@ export function StartScreen({
   onStart,
   onSurprise,
 }: StartScreenProps) {
+  const carouselRef = useRef<CarouselRef>(null);
   const currentIndex = useMemo(() => {
     if (!selected) {
       return 0;
@@ -49,17 +50,9 @@ export function StartScreen({
     }
   }, [breeds, onSelect, selected]);
 
-  const step = (delta: number) => {
-    if (breeds.length === 0) {
-      return;
-    }
-
-    const nextIndex = (currentIndex + delta + breeds.length) % breeds.length;
-    const next = breeds[nextIndex];
-    if (next) {
-      onSelect(next);
-    }
-  };
+  useEffect(() => {
+    carouselRef.current?.goTo(currentIndex, true);
+  }, [currentIndex]);
 
   if (loadingCatalog) {
     return (
@@ -76,86 +69,81 @@ export function StartScreen({
 
   return (
     <div className="start-screen">
+      {/* <img
+        src={SausageDog}
+        style={{
+          position: "absolute",
+          right: "-20%",
+          bottom: "-20%",
+          scale: 0.7,
+        }}
+      /> */}
       <div className="start-carousel">
         <Typography.Title level={2} className="start-carousel-name primary">
-          {current?.title ?? "Choose a breed"}
+          CHOOSE YOUR DESTINATION
         </Typography.Title>
 
-        <div className="start-carousel-stage">
-          <Button
-            className="start-carousel-nav"
-            aria-label="Previous breed"
-            disabled={breeds.length < 2}
-            type="text"
-            icon={<LeftOutlined />}
-            onClick={() => step(-1)}
-          />
-          <div className="start-carousel-frame">
-            {current ? (
-              <img
-                src={current.thumbnailUrl}
-                alt={current.title}
-                className="start-carousel-image"
-              />
-            ) : (
-              <div className="start-carousel-empty">No breeds loaded.</div>
-            )}
-          </div>
-          <Button
-            className="start-carousel-nav"
-            aria-label="Next breed"
-            disabled={breeds.length < 2}
-            icon={<RightOutlined />}
-            onClick={() => step(1)}
-          />
-        </div>
-
         {breeds.length > 0 ? (
-          <Typography.Text type="secondary" className="start-carousel-index">
-            {currentIndex + 1} / {breeds.length}
-          </Typography.Text>
-        ) : null}
-      </div>
-
-      <div className="start-screen-controls">
-        <div className="start-difficulty" role="group" aria-label="Difficulty">
-          <Button
-            type={difficulty === "easy" ? "primary" : "default"}
-            onClick={() => onDifficultyChange("easy")}
-          >
-            Easy
-          </Button>
-          <Button
-            type={difficulty === "hard" ? "primary" : "default"}
-            onClick={() => onDifficultyChange("hard")}
-          >
-            Hard
-          </Button>
-        </div>
-
-        <div className="start-screen-actions">
-          <Button
-            type="primary"
-            size="large"
-            disabled={!current}
-            loading={loadingRound}
-            onClick={() => {
-              if (current) {
-                onStart(current);
+          <Carousel
+            ref={carouselRef}
+            arrows
+            dots={false}
+            infinite={false}
+            adaptiveHeight={false}
+            beforeChange={(_from, to) => {
+              const next = breeds[to];
+              if (next) {
+                onSelect(next);
               }
             }}
           >
-            Start game
-          </Button>
-          <Button
-            size="large"
-            className="shuffle-btn"
-            loading={loadingRound}
-            onClick={onSurprise}
-          >
-            Surprise me
-          </Button>
-        </div>
+            {breeds.map((breed) => (
+              <div key={breed.pageUrl} className="carousel-slide">
+                <div className="start-carousel-frame">
+                  <img
+                    src={breed.thumbnailUrl}
+                    alt={breed.title}
+                    className="start-carousel-image"
+                  />
+                </div>
+                <h1 className="primary">{breed.title}</h1>
+              </div>
+            ))}
+          </Carousel>
+        ) : (
+          <div className="start-carousel-empty">No breeds loaded.</div>
+        )}
+      </div>
+
+      <div className="start-screen-actions">
+        {/* <Switch
+            checked={difficulty === "hard"}
+            checkedChildren={"hard"}
+            unCheckedChildren="easy"
+            onChange={(checked) =>
+              onDifficultyChange(checked ? "hard" : "easy")
+            }
+          /> */}
+        <Button
+          size="large"
+          disabled={!current}
+          loading={loadingRound}
+          onClick={() => {
+            if (current) {
+              onStart(current);
+            }
+          }}
+        >
+          Start
+        </Button>
+        <Button
+          size="large"
+          className="shuffle-btn"
+          loading={loadingRound}
+          onClick={onSurprise}
+        >
+          Surprise me
+        </Button>
       </div>
     </div>
   );

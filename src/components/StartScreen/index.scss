@@ -7,6 +7,7 @@
 }
 
 .start-screen {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -26,33 +27,42 @@
   text-align: center;
 }
 
-.start-carousel-stage {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  width: 100%;
+.start-carousel .ant-carousel {
+  width: min(420px, 70vw);
 }
 
-.start-carousel-nav.ant-btn {
-  flex: 0 0 auto;
-  width: 44px;
-  height: 44px;
-  border: none;
-  outline: none;
+.carousel-slide {
+  padding: 0 36px;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 
-  &::hover {
+  img {
+    border-radius: 5px;
     border: none;
-    outline: none;
+  }
+
+  h1 {
+    text-align: center;
+    font-size: 20px;
   }
 }
 
+.start-carousel .slick-prev,
+.start-carousel .slick-next {
+  color: #3d2a1f;
+}
+
+.start-carousel .slick-disabled {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
 .start-carousel-frame {
-  width: min(420px, 70vw);
+  width: 80%;
+  margin: 0 auto;
   aspect-ratio: 1;
-  overflow: hidden;
-  background: white;
-  border: 1px solid rgba(200, 200, 200, 1);
 }
 
 .start-carousel-image {
@@ -74,20 +84,14 @@
   display: block;
 }
 
-.start-screen-controls {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
-}
-
-.start-difficulty,
 .start-screen-actions {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
   gap: 12px;
 }
 
-.start-difficulty .ant-btn,
 .start-screen-actions .ant-btn {
   border-radius: 0;
 }

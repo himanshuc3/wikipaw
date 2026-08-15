@@ -1,4 +1,5 @@
-import { Button, Layout, Typography } from "antd";
+import { InfoCircleOutlined } from "@ant-design/icons";
+import { Button, Layout, Popover, Typography } from "antd";
 import type { ReactNode } from "react";
 
 const { Header, Content } = Layout;
@@ -29,6 +30,25 @@ export function GameShell({
           <div className="app-header-inner">
             <Typography.Title level={3} className="app-logo primary">
               Wiki Paws
+              <Popover
+                trigger="hover"
+                placement="bottomLeft"
+                title="How to play"
+                content={
+                  <ol className="game-rules">
+                    <li>Open Shuffle or Start and pick a dog breed to hunt.</li>
+                    <li>Easy starts 2 hops away. Hard starts 5 hops away.</li>
+                    <li>Click a Wikipedia image to hop to that article.</li>
+                    <li>Keep hopping until you land on the target breed page.</li>
+                    <li>Hover the hop counter to see your trail and jump back.</li>
+                  </ol>
+                }
+              >
+                <InfoCircleOutlined
+                  className="app-logo-info"
+                  aria-label="Game rules"
+                />
+              </Popover>
             </Typography.Title>
             <div className="header-actions">
               <Button
