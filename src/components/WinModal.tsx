@@ -5,6 +5,8 @@ import type { WikiSummary } from "../types";
 type WinModalProps = {
   open: boolean;
   hopCount: number;
+  recap?: string | null;
+  recapLoading?: boolean;
   target: WikiSummary;
   trail: WikiSummary[];
   onNewRound: () => void;
@@ -13,6 +15,8 @@ type WinModalProps = {
 export function WinModal({
   open,
   hopCount,
+  recap,
+  recapLoading,
   target,
   trail,
   onNewRound,
@@ -45,6 +49,14 @@ export function WinModal({
         <Typography.Paragraph>
           You got there in {hopCount} {hopCount === 1 ? "hop" : "hops"}.
         </Typography.Paragraph>
+        {recapLoading ? (
+          <Typography.Paragraph type="secondary">
+            Gemini is sniffing back over your trail…
+          </Typography.Paragraph>
+        ) : null}
+        {recap ? (
+          <Typography.Paragraph className="win-recap">{recap}</Typography.Paragraph>
+        ) : null}
         <Typography.Paragraph type="secondary">
           {trail.map((page) => page.title).join(" → ")}
         </Typography.Paragraph>

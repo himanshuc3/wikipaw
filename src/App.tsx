@@ -39,7 +39,10 @@ function App() {
           current &&
           current.trail === state.trail &&
           current.target === state.target &&
-          current.disabled === state.disabled
+          current.disabled === state.disabled &&
+          current.scentEnabled === state.scentEnabled &&
+          current.scentLoading === state.scentLoading &&
+          current.scent === state.scent
         ) {
           return current;
         }

@@ -101,7 +101,14 @@ export function GameShell({
                     <li>
                       Keep hopping until you land on the target breed page.
                     </li>
-                    <li>The header shows your target and how many hops you have taken.</li>
+                    <li>
+                      The header shows your target and how many hops you have
+                      taken.
+                    </li>
+                    <li>
+                      Gemini scores the scent of the current page and drops a
+                      cryptic hint. Warmer means you are closer to the breed.
+                    </li>
                   </ol>
                 }
               >

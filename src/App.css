@@ -16,7 +16,7 @@
   height: auto;
   display: flex;
   flex-direction: column;
-  width: 60%;
+  width: 70%;
   margin: 0 auto;
   background: transparent;
 }
@@ -92,7 +92,7 @@
   position: relative;
   display: flex;
   justify-content: flex-end;
-  width: auto;
+  width: 100%;
   line-height: normal;
 }
 
@@ -262,6 +262,11 @@
 
 .win-title {
   margin: 0 !important;
+}
+
+.win-recap {
+  margin: 0 !important;
+  color: #3d2a1f;
 }
 
 .teaser-gallery {

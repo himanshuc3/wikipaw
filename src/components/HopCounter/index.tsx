@@ -1,5 +1,7 @@
 import { Avatar, Typography } from "antd";
+import type { ScentReading } from "../../api/gemini";
 import type { WikiSummary } from "../../types";
+import { ScentMeter } from "../ScentMeter";
 import "./index.scss";
 
 type HopCounterProps = {
@@ -7,13 +9,29 @@ type HopCounterProps = {
   target?: WikiSummary;
   disabled?: boolean;
   onJump: (index: number) => void;
+  scentEnabled?: boolean;
+  scentLoading?: boolean;
+  scent?: ScentReading | null;
 };
 
-export function HopCounter({ trail, target }: HopCounterProps) {
+export function HopCounter({
+  trail,
+  target,
+  scentEnabled,
+  scentLoading,
+  scent,
+}: HopCounterProps) {
   const hopCount = Math.max(trail.length - 1, 0);
 
   return (
-    <div className="hop-counter">
+    <div
+      className={
+        scentEnabled ? "hop-counter hop-counter--with-scent" : "hop-counter"
+      }
+    >
+      {scentEnabled ? (
+        <ScentMeter loading={scentLoading} reading={scent} />
+      ) : null}
       {target ? (
         <div className="hop-target">
           <Avatar src={target.thumbnailUrl} alt="" size={28} shape="square" />

@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert, Space, Spin, Typography } from "antd";
+import { fetchGeminiEnabled, fetchWinRecap, type ScentReading } from "../api/gemini";
 import { loadHopCandidates } from "../game/hops";
 import { normalizeTitle } from "../game/path";
 import { candidateToSummary, titlesMatch } from "../game/play";
+import { useBreedScent } from "../game/scent";
 import type { GameRound, HopCandidate, WikiSummary } from "../types";
 import { HopGallery } from "./HopGallery";
 import { WinModal } from "./WinModal";
@@ -19,6 +21,9 @@ export type HopCounterState = {
   target: WikiSummary;
   disabled: boolean;
   onJump: (index: number) => void;
+  scentEnabled?: boolean;
+  scentLoading?: boolean;
+  scent?: ScentReading | null;
 };
 
 type GameBoardProps = {
@@ -52,6 +57,9 @@ export function GameBoard({
     ]),
   );
   const hopRequestRef = useRef(0);
+  const [recap, setRecap] = useState<string | null>(null);
+  const [recapLoading, setRecapLoading] = useState(false);
+  const scent = useBreedScent(play.current, round.target, !play.won);
 
   const moveTo = useCallback(
     async (page: WikiSummary, nextTrail: WikiSummary[]) => {
@@ -127,6 +135,49 @@ export function GameBoard({
   };
 
   useEffect(() => {
+    if (!play.won) {
+      setRecap(null);
+      setRecapLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setRecapLoading(true);
+
+    void fetchGeminiEnabled()
+      .then((enabled) => {
+        if (!enabled) {
+          return null;
+        }
+
+        return fetchWinRecap({
+          trail: play.trail.map((page) => page.title),
+          targetTitle: round.target.title,
+          hopCount: Math.max(play.trail.length - 1, 0),
+        });
+      })
+      .then((next) => {
+        if (!cancelled) {
+          setRecap(next);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setRecap(null);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setRecapLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [play.trail, play.won, round.target.title]);
+
+  useEffect(() => {
     const jumpToTrailIndex = (index: number) => {
       const page = play.trail[index];
       if (!page || hopping || play.won || index === play.trail.length - 1) {
@@ -141,12 +192,25 @@ export function GameBoard({
       target: round.target,
       disabled: hopping || play.won,
       onJump: jumpToTrailIndex,
+      scentEnabled: scent.enabled,
+      scentLoading: scent.loading,
+      scent: scent.reading,
     });
 
     return () => {
       onHopCounterChange?.(null);
     };
-  }, [hopping, moveTo, onHopCounterChange, play.trail, play.won, round.target]);
+  }, [
+    hopping,
+    moveTo,
+    onHopCounterChange,
+    play.trail,
+    play.won,
+    round.target,
+    scent.enabled,
+    scent.loading,
+    scent.reading,
+  ]);
 
   return (
     <Space orientation="vertical" size="large" className="round-board">
@@ -198,6 +262,8 @@ export function GameBoard({
       <WinModal
         open={play.won}
         hopCount={Math.max(play.trail.length - 1, 0)}
+        recap={recap}
+        recapLoading={recapLoading}
         target={round.target}
         trail={play.trail}
         onNewRound={onNewRound}

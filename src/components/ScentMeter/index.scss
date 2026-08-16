@@ -1,0 +1,92 @@
+.scent-meter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1 1 auto;
+  padding: 6px 10px;
+  border-right: 1px solid rgba(200, 200, 200, 1);
+}
+
+.scent-meter-kicker,
+.scent-meter-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #3d2a1f;
+  white-space: nowrap;
+}
+
+.scent-meter-info {
+  margin-left: 4px;
+  font-size: 0.55em;
+  vertical-align: super;
+  color: #6b5344;
+  cursor: help;
+}
+
+.scent-meter-kicker {
+  padding-right: 10px;
+  border-right: 1px solid rgba(200, 200, 200, 1);
+}
+
+.scent-meter[data-label="cold"] .scent-meter-label {
+  color: #5b7c99;
+}
+
+.scent-meter[data-label="cool"] .scent-meter-label {
+  color: #4f7a5a;
+}
+
+.scent-meter[data-label="warm"] .scent-meter-label,
+.scent-meter[data-label="hot"] .scent-meter-label {
+  color: #c45c26;
+}
+
+.scent-meter[data-label="scorching"] .scent-meter-label {
+  color: #b42318;
+}
+
+.scent-meter-bar {
+  flex-grow: 1;
+  height: 8px;
+  overflow: hidden;
+  background: #efe2d2;
+}
+
+.scent-meter-bar span {
+  display: block;
+  height: 100%;
+  background: #c45c26;
+  transition: width 240ms ease;
+}
+
+.scent-meter[data-label="cold"] .scent-meter-bar span {
+  background: #5b7c99;
+}
+
+.scent-meter[data-label="cool"] .scent-meter-bar span {
+  background: #4f7a5a;
+}
+
+.scent-meter[data-label="scorching"] .scent-meter-bar span {
+  background: #b42318;
+}
+
+.scent-meter-credit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b5344;
+  white-space: nowrap;
+}
+
+.scent-meter-gemini-icon {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+}
