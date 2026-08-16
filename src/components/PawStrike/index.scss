@@ -6,6 +6,41 @@
   overflow: hidden;
 }
 
+.paw-print {
+  position: absolute;
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  transform: translate(-50%, -50%) rotate(var(--paw-angle)) scale(0.7);
+  animation: paw-print-hold 2.6s ease forwards;
+}
+
+@keyframes paw-print-hold {
+  0% {
+    transform: translate(-50%, -50%) rotate(var(--paw-angle)) scale(0.7);
+    opacity: 0;
+  }
+
+  8% {
+    transform: translate(-50%, -50%) rotate(var(--paw-angle)) scale(1.08);
+    opacity: 0.92;
+  }
+
+  16% {
+    transform: translate(-50%, -50%) rotate(var(--paw-angle)) scale(1);
+    opacity: 0.88;
+  }
+
+  78% {
+    opacity: 0.88;
+  }
+
+  100% {
+    transform: translate(-50%, -50%) rotate(var(--paw-angle)) scale(1);
+    opacity: 0;
+  }
+}
+
 .paw-strike {
   position: absolute;
   display: block;

@@ -5,9 +5,14 @@ import paw4 from "../../assets/paw_4.png";
 import paw6 from "../../assets/paw_6.png";
 import paw7 from "../../assets/paw_7.png";
 import paw9 from "../../assets/paw_9.png";
+import pawPrint from "../../assets/istockphoto-2177795345-612x612-removebg-preview.png";
 import "./index.scss";
 
 const PAW_IMAGES = [paw1, paw2, paw4, paw6, paw7, paw9];
+const EDGE_OVERHANG = 160;
+const REACH_MS = 1150;
+const PRINT_AT_MS = 680;
+const PRINT_HOLD_MS = 2600;
 
 type Strike = {
   id: number;
@@ -16,6 +21,13 @@ type Strike = {
   originY: number;
   angle: number;
   length: number;
+};
+
+type Print = {
+  id: number;
+  x: number;
+  y: number;
+  angle: number;
 };
 
 function pickPaw() {
@@ -35,13 +47,13 @@ function edgeOrigin(clickX: number, clickY: number) {
 
   switch (nearest?.edge) {
     case "top":
-      return { x: clickX, y: 0 };
+      return { x: clickX, y: -EDGE_OVERHANG };
     case "left":
-      return { x: 0, y: clickY };
+      return { x: -EDGE_OVERHANG, y: clickY };
     case "right":
-      return { x: width, y: clickY };
+      return { x: width + EDGE_OVERHANG, y: clickY };
     default:
-      return { x: clickX, y: height };
+      return { x: clickX, y: height + EDGE_OVERHANG };
   }
 }
 
@@ -62,17 +74,45 @@ function createStrike(clickX: number, clickY: number): Strike {
 
 export function usePawStrike() {
   const [strikes, setStrikes] = useState<Strike[]>([]);
+  const [prints, setPrints] = useState<Print[]>([]);
 
   const playStrike = (clickX: number, clickY: number) => {
     const strike = createStrike(clickX, clickY);
     setStrikes((current) => [...current, strike]);
+
+    window.setTimeout(() => {
+      const print = {
+        id: strike.id,
+        x: clickX,
+        y: clickY,
+        angle: strike.angle,
+      };
+      setPrints((current) => [...current, print]);
+      window.setTimeout(() => {
+        setPrints((current) => current.filter((item) => item.id !== print.id));
+      }, PRINT_HOLD_MS);
+    }, PRINT_AT_MS);
+
     window.setTimeout(() => {
       setStrikes((current) => current.filter((item) => item.id !== strike.id));
-    }, 1200);
+    }, REACH_MS);
   };
 
   const layer = (
     <div className="paw-strike-layer" aria-hidden>
+      {prints.map((print) => (
+        <img
+          key={`print-${print.id}`}
+          src={pawPrint}
+          alt=""
+          className="paw-print"
+          style={{
+            left: print.x,
+            top: print.y,
+            ["--paw-angle" as string]: `${print.angle}deg`,
+          }}
+        />
+      ))}
       {strikes.map((strike) => (
         <img
           key={strike.id}
