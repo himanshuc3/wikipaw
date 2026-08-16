@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { InfoCircleOutlined } from "@ant-design/icons";
 import { Button, Layout, Popover, Typography } from "antd";
 import pawPrint from "../assets/istockphoto-2177795345-612x612-removebg-preview.png";
+import { Footer } from "antd/es/layout/layout";
 
 const { Header, Content } = Layout;
 
@@ -97,8 +98,10 @@ export function GameShell({
                     <li>Open Shuffle or Start and pick a dog breed to hunt.</li>
                     <li>Easy starts 2 hops away. Hard starts 5 hops away.</li>
                     <li>Click a Wikipedia image to hop to that article.</li>
-                    <li>Keep hopping until you land on the target breed page.</li>
-                    <li>Hover the hop counter to see your trail and jump back.</li>
+                    <li>
+                      Keep hopping until you land on the target breed page.
+                    </li>
+                    <li>The header shows your target and how many hops you have taken.</li>
                   </ol>
                 }
               >
@@ -126,14 +129,14 @@ export function GameShell({
         {hopCounter ? (
           <div className="app-header-hop-counter">{hopCounter}</div>
         ) : null}
-        {/* {hopCounter ? ( */}
-        {/* ) : null} */}
       </Header>
       <Content className="app-content">{children}</Content>
-      {/* <Footer className="app-footer">
-        Hop through linked Wikipedia images until you land on the target breed
-        page.
-      </Footer> */}
+      <Footer className="app-footer">
+        Made with 💛 by{" "}
+        <a href="www.himanshusb.in" target="_blank">
+          Himanshu Chhabra
+        </a>
+      </Footer>
     </Layout>
   );
 }

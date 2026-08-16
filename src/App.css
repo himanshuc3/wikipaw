@@ -92,9 +92,8 @@
   position: relative;
   display: flex;
   justify-content: flex-end;
-
   width: auto;
-  /* height: 30px; */
+  line-height: normal;
 }
 
 .ant-typography.app-logo {

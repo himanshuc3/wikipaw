@@ -16,6 +16,7 @@ type PlayState = {
 
 export type HopCounterState = {
   trail: WikiSummary[];
+  target: WikiSummary;
   disabled: boolean;
   onJump: (index: number) => void;
 };
@@ -137,6 +138,7 @@ export function GameBoard({
 
     onHopCounterChange?.({
       trail: play.trail,
+      target: round.target,
       disabled: hopping || play.won,
       onJump: jumpToTrailIndex,
     });
@@ -144,7 +146,7 @@ export function GameBoard({
     return () => {
       onHopCounterChange?.(null);
     };
-  }, [hopping, moveTo, onHopCounterChange, play.trail, play.won]);
+  }, [hopping, moveTo, onHopCounterChange, play.trail, play.won, round.target]);
 
   return (
     <Space orientation="vertical" size="large" className="round-board">

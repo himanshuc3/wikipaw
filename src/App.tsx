@@ -38,6 +38,7 @@ function App() {
         if (
           current &&
           current.trail === state.trail &&
+          current.target === state.target &&
           current.disabled === state.disabled
         ) {
           return current;

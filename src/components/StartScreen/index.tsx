@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from "react";
-import { Button, Carousel, Spin, Switch, Typography } from "antd";
+import { Button, Carousel, Spin, Typography } from "antd";
 import type { CarouselRef } from "antd/es/carousel";
 import type { Difficulty } from "../../game/difficulty";
 import type { BreedChoice } from "../../types";
@@ -20,12 +20,10 @@ type StartScreenProps = {
 
 export function StartScreen({
   breeds,
-  difficulty,
   loadingCatalog,
   loadingRound,
   progressMessage,
   selected,
-  onDifficultyChange,
   onSelect,
   onStart,
   onSurprise,
