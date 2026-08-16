@@ -1,8 +1,65 @@
+import { useEffect, useState, type ReactNode } from "react";
 import { InfoCircleOutlined } from "@ant-design/icons";
 import { Button, Layout, Popover, Typography } from "antd";
-import type { ReactNode } from "react";
+import pawPrint from "../assets/istockphoto-2177795345-612x612-removebg-preview.png";
 
 const { Header, Content } = Layout;
+
+type PawStep = {
+  left: number;
+  top: number;
+  rotate: number;
+  delay: number;
+};
+
+function buildPawWalk(): PawStep[] {
+  const count = 11 + Math.floor(Math.random() * 4);
+
+  return Array.from({ length: count }, (_, index) => {
+    const progress = count === 1 ? 0 : index / (count - 1);
+    const side = index % 2 === 0 ? -1 : 1;
+
+    return {
+      left: 1.5 + progress * 97 + (Math.random() * 1.6 - 0.8),
+      top: 50 + side * (14 + Math.random() * 10) + (Math.random() * 6 - 3),
+      rotate: 10 + Math.random() * 18,
+      delay: index * (0.32 + Math.random() * 0.1),
+    };
+  });
+}
+
+function HeaderPawWalk() {
+  const [steps, setSteps] = useState(buildPawWalk);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setSteps(buildPawWalk());
+    }, 9000);
+
+    return () => {
+      window.clearInterval(timer);
+    };
+  }, []);
+
+  return (
+    <div className="header-paw-walk" aria-hidden>
+      {steps.map((step, index) => (
+        <img
+          key={`${step.left}-${step.delay}-${index}`}
+          src={pawPrint}
+          alt=""
+          className="header-paw-step"
+          style={{
+            left: `${step.left}%`,
+            top: `${step.top}%`,
+            animationDelay: `${step.delay}s`,
+            ["--paw-rotate" as string]: `${step.rotate}deg`,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
 
 type GameShellProps = {
   children: ReactNode;
@@ -27,6 +84,7 @@ export function GameShell({
     <Layout className="app-shell">
       <Header className="app-header">
         <div className="app-header-main">
+          <HeaderPawWalk />
           <div className="app-header-inner">
             <Typography.Title level={3} className="app-logo primary">
               Wiki Paws

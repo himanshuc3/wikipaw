@@ -22,12 +22,50 @@
 }
 
 .app-header-main {
+  position: relative;
+  overflow: hidden;
   background: white;
   border: 1px solid rgba(200, 200, 200, 1);
   padding: 6px 12px;
 }
 
+.header-paw-walk {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.header-paw-step {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  opacity: 0;
+  transform: translate(-50%, -50%) rotate(var(--paw-rotate));
+  animation: header-paw-walk 9s ease-in-out infinite;
+}
+
+@keyframes header-paw-walk {
+  0%,
+  10% {
+    opacity: 0;
+  }
+
+  18%,
+  38% {
+    opacity: 0.16;
+  }
+
+  52%,
+  100% {
+    opacity: 0;
+  }
+}
+
 .app-header-inner {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: space-between;
