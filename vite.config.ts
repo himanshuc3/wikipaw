@@ -5,13 +5,16 @@ import { geminiPlugin } from "./vite-plugin-gemini.ts";
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
+  const base =
+    env.VITE_BASE_PATH || (mode === "production" ? "/wikipaw/" : "/");
 
   return {
+    base,
     plugins: [
       react(),
       geminiPlugin({
         apiKey: env.GEMINI_API_KEY,
-        model: env.GEMINI_MODEL,
+        model: env.GEMINI_MODEL || env.VITE_GEMINI_MODEL,
       }),
     ],
   };
