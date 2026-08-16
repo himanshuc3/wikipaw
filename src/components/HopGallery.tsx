@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Masonry } from "antd";
 import type { HopCandidate } from "../types";
+import { usePawStrike } from "./PawStrike";
 import { HopInfoBox } from "./HopInfoBox";
 
 type HopGalleryProps = {
@@ -19,9 +20,11 @@ export function HopGallery({
   onHop,
 }: HopGalleryProps) {
   const [hovered, setHovered] = useState<HopCandidate | null>(null);
+  const { playStrike, layer } = usePawStrike();
 
   return (
     <div className="hop-gallery-wrap" onMouseLeave={() => setHovered(null)}>
+      {layer}
       <Masonry
         columns={4}
         gutter={16}
@@ -36,7 +39,12 @@ export function HopGallery({
             disabled={disabled}
             onMouseEnter={() => setHovered(data)}
             onFocus={() => setHovered(data)}
-            onClick={() => onHop(data)}
+            onClick={(event) => {
+              if (!preview) {
+                playStrike(event.clientX, event.clientY);
+              }
+              onHop(data);
+            }}
           >
             <img
               src={data.imageUrl || data.thumbnailUrl}

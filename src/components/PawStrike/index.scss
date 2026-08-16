@@ -1,0 +1,38 @@
+.paw-strike-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.paw-strike {
+  position: absolute;
+  display: block;
+  transform-origin: 50% 100%;
+  transform: translate(-50%, -100%) rotate(var(--paw-angle)) scaleY(0);
+  object-fit: fill;
+  animation: paw-reach 1.15s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+}
+
+@keyframes paw-reach {
+  0% {
+    transform: translate(-50%, -100%) rotate(var(--paw-angle)) scaleY(0);
+    opacity: 1;
+  }
+
+  45% {
+    transform: translate(-50%, -100%) rotate(var(--paw-angle)) scaleY(1.04);
+    opacity: 1;
+  }
+
+  62% {
+    transform: translate(-50%, -100%) rotate(var(--paw-angle)) scaleY(1);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translate(-50%, -100%) rotate(var(--paw-angle)) scaleY(0.12);
+    opacity: 0;
+  }
+}
