@@ -140,7 +140,7 @@ export function GameShell({
       <Content className="app-content">{children}</Content>
       <Footer className="app-footer">
         Made with 💛 by{" "}
-        <a href="www.himanshusb.in" target="_blank">
+        <a href="https://www.himanshusb.in" target="_blank">
           Himanshu Chhabra
         </a>
       </Footer>
